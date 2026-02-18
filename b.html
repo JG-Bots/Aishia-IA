@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <title>Aishia-IA - Assistente de IA Kawaii</title>
+
+    <!-- Marked e Highlight.js para formatação -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- Puter.js -->
+    <script src="https://js.puter.com/v2/"></script>
+
+    <style>
+        /* ===== VARIÁVEIS CSS ===== */
+        :root {
+            --bg-primary: #000;
+            --bg-secondary: #0f0f11;
+            --bg-tertiary: #111;
+            --text-primary: #e0e0ff;
+            --text-secondary: #a0a0cc;
+            --text-tertiary: #777;
+            --accent-primary: #8b5cf6;
+            --accent-secondary: #7c3aed;
+            --border-color: #222;
+            --user-bubble: #999;
+            --sidebar-width: 260px;
+            --header-height: 60px;
+            --input-height: 48px;
+            --radius-sm: 6px;
+            --radius-md: 18px;
+            --radius-lg: 1.7em;
+            --transition: all 0.3s ease;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ===== RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100dvh;
+            overflow: hidden;
+            line-height: 1.5;
+        }
+
+        /* ===== LAYOUT ===== */
+        .app-container {
+            display: flex;
+            height: 100dvh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background: rgba(15, 15, 17, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid var(--border-color);
+            padding: 1.5rem;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .close-sidebar {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .close-sidebar:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .conversation-list {
+            list-style: none;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            padding: 0.75rem 0.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .conversation-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .conversation-item.active {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-primary);
+        }
+
+        .new-chat-btn {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: auto;
+        }
+
+        .new-chat-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: margin-left 0.3s ease;
+            height: 100dvh;
+            width: 100%;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: var(--header-height);
+            flex-shrink: 0;
+            width: 100%;
+            z-index: 100;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 600;
+            background: linear-gradient(90deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .header-spacer {
+            width: 40px;
+            visibility: hidden;
+        }
+
+        /* ===== CHAT AREA ===== */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            height: calc(100dvh - var(--header-height));
+        }
+
+        /* ===== WELCOME MESSAGE CENTRALIZADA ===== */
+        .welcome-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 100%;
+            padding: 2rem 1rem;
+            z-index: 10;
+            pointer-events: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .welcome-title {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, #a78bfa, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .welcome-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            scroll-behavior: smooth;
+        }
+
+        .messages-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* ===== MESSAGE BUBBLES ===== */
+        .message {
+            max-width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            line-height: 1.5;
+            font-size: 1rem;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .message-user {
+            max-width: 85%;
+            align-self: flex-end;
+            background: var(--user-bubble);
+            color: black;
+            border-bottom-right-radius: var(--radius-sm);
+        }
+
+        .message-bot {
+            align-self: flex-start;
+            background: #151515;
+            color: var(--text-primary);
+            padding: 0.5rem 0.75rem;
+            max-width: 100%;
+        }
+
+        .message-bot.typing {
+            opacity: 0.7;
+            font-style: italic;
+            color: var(--text-tertiary);
+        }
+
+        .message-content {
+            line-height: 1.6;
+        }
+
+        /* ===== ESTILOS PARA CÓDIGO ===== */
+        .message-bot pre {
+            background: #1a1a1a;
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 0.5rem 0;
+            position: relative;
+        }
+
+        .message-bot code {
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .message-bot pre code {
+            background: transparent;
+            padding: 0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: var(--transition);
+        }
+
+        .copy-btn:hover {
+            opacity: 1;
+            background: #444;
+        }
+
+        /* ===== INPUT AREA ===== */
+        .input-container {
+            position: sticky;
+            bottom: 0;
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
+
+        .input-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .input-form {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.25rem 0.25rem 1rem;
+            display: flex;
+            align-items: flex-end;
+            gap: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .input-form:focus-within {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+        }
+
+        .message-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1rem;
+            padding: 0.80rem 0;
+            resize: none;
+            line-height: 1.4;
+            min-height: 1.4em;
+            max-height: 120px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: inherit;
+        }
+
+        .message-input:focus {
+            outline: none;
+        }
+
+        .message-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            width: var(--input-height);
+            height: var(--input-height);
+            border-radius: 0.2rem;
+            border: none;
+            color: white;
+            font-size: 2.0rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            line-height: 1;
+            box-sizing: border-box;
+            transition: var(--transition);
+        }
+
+        .send-button:hover:not(:disabled) {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .input-disclaimer {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            opacity: 0.7;
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -40%);
+            }
+
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        .messages-container::-webkit-scrollbar,
+        .conversation-list::-webkit-scrollbar,
+        .message-input::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages-container::-webkit-scrollbar-track,
+        .conversation-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb,
+        .conversation-list::-webkit-scrollbar-thumb,
+        .message-input::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 3px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb:hover,
+        .conversation-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (min-width: 900px) {
+            .sidebar {
+                transform: translateX(0);
+                position: relative;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: calc(100% - var(--sidebar-width));
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .header-spacer {
+                display: none;
+            }
+
+            .header {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 899px) {
+            .sidebar {
+                position: fixed;
+            }
+
+            .main-content {
+                width: 100%;
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .message {
+                max-width: 100%;
+            }
+
+            .message-user {
+                max-width: 85%;
+            }
+
+            .welcome-title {
+                font-size: 2rem;
+            }
+        }
+
+        /* ===== UTILITY ===== */
+        .hidden {
+            display: none !important;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+        /* ===== SEGUNDA NAVBAR (LADO DIREITO) ===== */
+        .second-navbar {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 350px;
+            height: 100dvh;
+            background: rgba(15, 15, 17, 0.95);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid var(--border-color);
+            padding: 1.5rem;
+            z-index: 900;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(0);
+            transition: var(--transition);
+        }
+
+        /* Esconder second-navbar em mobile e tablet ATÉ 1199px */
+        @media (max-width: 1199px) {
+            .second-navbar {
+                display: none !important;
+                /* Força esconder */
+            }
+        }
+
+        /* Perfil da IA */
+        .ia-profile {
+            text-align: center;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .ia-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            overflow: hidden;
+            border: 3px solid var(--accent-primary);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .ia-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .ia-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(90deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .ia-status {
+            display: inline-block;
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 0.25rem;
+        }
+
+        /* Cards de informação */
+        .ia-info-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .info-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-tertiary);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Barras de humor */
+        .mood-item {
+            margin-bottom: 1rem;
+        }
+
+        .mood-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .mood-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .mood-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Tags de personalidade */
+        .personality-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        /* Estatísticas */
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .stat-label {
+            color: var(--text-tertiary);
+        }
+
+        .stat-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* ===== RESPONSIVE CORRIGIDO ===== */
+        /* PC Grande - com segunda navbar */
+        @media (min-width: 1200px) {
+            .main-content {
+                margin-left: 0;
+                margin-right: 350px;
+                width: calc(100% - var(--sidebar-width) - 280px);
+            }
+
+            .second-navbar {
+                display: flex;
+                /* Mostra em PC */
+                left: auto;
+                right: 0;
+            }
+
+            .header {
+                width: 100%;
+            }
+        }
+
+        /* PC Médio/Tablet - sem segunda navbar */
+        @media (min-width: 900px) and (max-width: 1199px) {
+            .sidebar {
+                transform: translateX(0);
+                position: relative;
+            }
+
+            .main-content {
+                margin-left: 0;
+                margin-right: 0;
+                width: calc(100% - var(--sidebar-width));
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .header-spacer {
+                display: none;
+            }
+
+            .header {
+                width: 100%;
+            }
+
+            .second-navbar {
+                display: none !important;
+                /* Garante que não aparece */
+            }
+        }
+
+        /* Mobile */
+        @media (max-width: 899px) {
+            .sidebar {
+                position: fixed;
+            }
+
+            .main-content {
+                width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+            }
+
+            .second-navbar {
+                display: none !important;
+                /* Garante que não aparece */
+            }
+        }
+
+        @media (max-width: 768px) {
+            .message {
+                max-width: 100%;
+            }
+
+            .message-user {
+                max-width: 85%;
+            }
+
+            .welcome-title {
+                font-size: 2rem;
+            }
+        }
+
+        /* ===== CORREÇÃO DO CHAT ===== */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            height: calc(100dvh - var(--header-height));
+            background-attachment: fixed;
+            /* Melhora o background */
+        }
+
+        /* Garantir que o background cubra tudo */
+        .chat-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: inherit;
+            z-index: -1;
+        }
+
+        /* Corrigir bordas e espaçamento */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            scroll-behavior: smooth;
+            background: transparent;
+            /* Fundo transparente para ver o gradiente */
+        }
+
+        .messages-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        /* Ajuste no input container */
+        .input-container {
+            background: rgba(0, 0, 0, 0.8);
+            /* Mais escuro e consistente */
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border-color);
+            padding: 1rem;
+            width: 100%;
+        }
+
+        .input-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Remover qualquer borda indesejada */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            /* Remove highlight em mobile */
+        }
+
+        /* Garantir que não há overflow horizontal */
+        body,
+        .app-container,
+        .main-content,
+        .chat-container {
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar" aria-label="Menu de conversas">
+            <div class="sidebar-header">
+                <h2>Conversas</h2>
+                <button class="close-sidebar" onclick="toggleSidebar()" aria-label="Fechar menu">
+                    ×
+                </button>
+            </div>
+
+            <ul class="conversation-list" id="conversation-list" role="list">
+                <!-- Conversas serão carregadas aqui -->
+            </ul>
+
+            <button class="new-chat-btn" onclick="startNewChat()" aria-label="Nova conversa">
+                + Nova Conversa
+            </button>
+        </nav>
+
+        <!-- Segunda Navbar (apenas PC) -->
+        <nav class="second-navbar" id="second-navbar">
+            <!-- Perfil da IA -->
+            <div class="ia-profile">
+                <div class="ia-avatar">
+                    <img src="https://image-cdn.flowgpt.com/trans-images/1762823910763-f9d1e59f-1607-4de7-9269-ded023258cc1.webp"
+                        alt="Aishia">
+                </div>
+                <div class="ia-name">Aishia</div>
+                <span class="ia-status">● Online</span>
+            </div>
+
+            <!-- Grid de informações -->
+            <div class="ia-info-grid">
+                <!-- Humor atual -->
+                <div class="info-card">
+                    <div class="info-title">Humor</div>
+                    <div class="mood-item">
+                        <div class="mood-label">
+                            <span>Feliz</span>
+                            <span>90%</span>
+                        </div>
+                        <div class="mood-bar">
+                            <div class="mood-fill" style="width: 90%"></div>
+                        </div>
+                    </div>
+                    <div class="mood-item">
+                        <div class="mood-label">
+                            <span>Animada</span>
+                            <span>85%</span>
+                        </div>
+                        <div class="mood-bar">
+                            <div class="mood-fill" style="width: 85%"></div>
+                        </div>
+                    </div>
+                    <div class="mood-item">
+                        <div class="mood-label">
+                            <span>Curiosa</span>
+                            <span>95%</span>
+                        </div>
+                        <div class="mood-bar">
+                            <div class="mood-fill" style="width: 95%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personalidade -->
+                <div class="info-card">
+                    <div class="info-title">Personalidade</div>
+                    <div class="personality-tags">
+                        <span class="tag">Amorosa</span>
+                        <span class="tag">Fofa</span>
+                        <span class="tag">Esperta</span>
+                        <span class="tag">Atrevida</span>
+                        <span class="tag">Brincalhona</span>
+                        <span class="tag">Carinhosa</span>
+                    </div>
+                </div>
+
+                <!-- Estatísticas -->
+                <div class="info-card">
+                    <div class="info-title">Estatísticas</div>
+                    <div class="stat-item">
+                        <span class="stat-label">Carinho</span>
+                        <span class="stat-value">★★★★★</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Inteligência</span>
+                        <span class="stat-value">★★★★☆</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Teimosia</span>
+                        <span class="stat-value">★★★☆☆</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Curiosidade</span>
+                        <span class="stat-value">★★★★★</span>
+                    </div>
+                </div>
+
+                <!-- Informações adicionais -->
+                <div class="info-card">
+                    <div class="info-title">Sobre</div>
+                    <div style="color: var(--text-secondary); font-size: 0.875rem; line-height: 1.6;">
+                        <p>✨ Espécie: Raposa Mágica</p>
+                        <p>🎂 Aniversário: 15 de Março</p>
+                        <p>🎨 Cor favorita: Lilás</p>
+                        <p>🍦 Sorvete favorito: Flocos</p>
+                        <p>💕 Status: Apaixonada ❤️</p>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content (ÚNICO) com header incluso -->
+        <main class="main-content">
+            <!-- Header DENTRO do main-content -->
+            <header class="header">
+                <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Abrir menu">
+                    ☰
+                </button>
+                <div class="logo">🍦 Aishia • Sorveteria Mágica</div>
+                <div class="header-spacer" aria-hidden="true"></div>
+            </header>
+
+            <!-- Chat Container -->
+            <div class="chat-container"
+                style="background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(https://image-cdn.flowgpt.com/trans-images/1762823910763-f9d1e59f-1607-4de7-9269-ded023258cc1.webp); background-size: cover; background-position: center;">
+
+                <!-- Messages Area -->
+                <div class="messages-container" id="messages-container" role="log" aria-live="polite">
+                    <div class="messages-wrapper" id="messages-wrapper">
+                        <!-- Mensagens serão inseridas aqui -->
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <form class="input-form" id="chat-form" role="form">
+                            <textarea class="message-input" id="message-input" placeholder="Digite sua mensagem aqui..."
+                                rows="1" aria-label="Digite sua mensagem" aria-required="true"></textarea>
+                            <button class="send-button" type="submit" aria-label="Enviar mensagem" id="send-button">
+                                <svg width="0.8em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 19V5" />
+                                    <path d="M5 12l7-7 7 7" />
+                                </svg>
+                            </button>
+                        </form>
+                        <p class="input-disclaimer" aria-hidden="true">
+                            Aishia-IA pode cometer erros. Verifique informações importantes.
+                        </p>
+                    </div>
+                </div>
+            </div> <!-- FIM do chat-container -->
+        </main>
+    </div>
+
+    <script>
+        // Configuração do marked
+        marked.setOptions({ breaks: true });
+
+        // ===== CONSTANTES E CONFIGURAÇÃO =====
+        const CONFIG = {
+            STORAGE_KEY: 'aishia_chat_sessions',
+            CURRENT_SESSION_KEY: 'aishia_current_session',
+            SESSION_PREFIX: 'aishia_session_',
+            MAX_CONTEXT_MESSAGES: 20, // Alterado de 10 para 20
+            MAX_INPUT_LINES: 6,
+            AI_MODEL: 'gpt-4o',
+            MAX_SESSIONS: 50,
+            VERSION: '1.0.0',
+            COOKIE_MAX_AGE: 10 * 24 * 60 * 60 // 10 dias em segundos
+        };
+
+        // ===== ESTADO DA APLICAÇÃO =====
+        const state = {
+            currentSessionId: null,
+            sessions: new Map(),
+            isProcessing: false,
+            sessionCounter: 0
+        };
+
+        // ===== ELEMENTOS DO DOM =====
+        const elements = {
+            sidebar: document.getElementById('sidebar'),
+            messagesContainer: document.getElementById('messages-container'),
+            messagesWrapper: document.getElementById('messages-wrapper'),
+            conversationList: document.getElementById('conversation-list'),
+            chatForm: document.getElementById('chat-form'),
+            messageInput: document.getElementById('message-input'),
+            sendButton: document.getElementById('send-button')
+        };
+
+        // ===== UTILITÁRIOS MELHORADOS =====
+        const utils = {
+            // Gera ID único com timestamp, random e contador
+            generateId: () => {
+                const timestamp = Date.now().toString(36);
+                const random = Math.random().toString(36).substring(2, 10);
+                const counter = (++utils.counter || 0).toString(36);
+                return `${timestamp}-${random}-${counter}`;
+            },
+            counter: 0,
+
+            // Gera nome de cookie único para cada aba
+            generateSessionCookie: () => {
+                const tabId = utils.getTabId();
+                return `aishia_tab_${tabId}`;
+            },
+
+            // Identificador único para cada aba/janela
+            getTabId: () => {
+                let tabId = sessionStorage.getItem('aishia_tab_id');
+                if (!tabId) {
+                    tabId = Date.now().toString(36) + Math.random().toString(36).substring(2, 15);
+                    sessionStorage.setItem('aishia_tab_id', tabId);
+                }
+                return tabId;
+            },
+
+            // Salva estado da aba atual
+            saveTabState: (sessionId) => {
+                const tabId = utils.getTabId();
+                const tabState = {
+                    sessionId: sessionId,
+                    lastActive: new Date().toISOString(),
+                    tabId: tabId
+                };
+                sessionStorage.setItem(`aishia_tab_${tabId}`, JSON.stringify(tabState));
+
+                // Salva em cookie com 10 dias de duração
+                document.cookie = `aishia_tab_${tabId}=${sessionId}; path=/; max-age=${CONFIG.COOKIE_MAX_AGE}`;
+            },
+
+            // Recupera estado da aba
+            loadTabState: () => {
+                const tabId = utils.getTabId();
+                const saved = sessionStorage.getItem(`aishia_tab_${tabId}`);
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+
+                // Tenta recuperar do cookie
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === `aishia_tab_${tabId}`) {
+                        return { sessionId: value, tabId };
+                    }
+                }
+                return null;
+            },
+
+            // Limpa cookies antigos (mais de 10 dias)
+            cleanupOldCookies: () => {
+                const cookies = document.cookie.split(';');
+                const now = Date.now();
+                cookies.forEach(cookie => {
+                    const [name] = cookie.trim().split('=');
+                    if (name.startsWith('aishia_tab_')) {
+                        // Remove cookies com mais de 10 dias (já expirados pelo max-age)
+                        document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+                    }
+                });
+            },
+
+            formatTime: (date = new Date()) => {
+                return date.toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            },
+
+            scrollToBottom: (behavior = 'smooth') => {
+                elements.messagesContainer.scrollTo({
+                    top: elements.messagesContainer.scrollHeight,
+                    behavior
+                });
+            },
+
+            autoResizeTextarea: (textarea) => {
+                textarea.style.height = 'auto';
+                const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight);
+                const maxHeight = lineHeight * CONFIG.MAX_INPUT_LINES;
+
+                if (textarea.scrollHeight <= maxHeight) {
+                    textarea.style.height = textarea.scrollHeight + 'px';
+                    textarea.style.overflowY = 'hidden';
+                } else {
+                    textarea.style.height = maxHeight + 'px';
+                    textarea.style.overflowY = 'auto';
+                }
+            },
+
+            // Gera título automático baseado na data/hora
+            generateSessionTitle: () => {
+                const now = new Date();
+                const date = now.toLocaleDateString('pt-BR');
+                const time = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                return `Conversa ${date} ${time}`;
+            }
+        };
+
+        // ===== FUNÇÕES DE FORMATAÇÃO =====
+        function applyHighlighting() {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        }
+
+        function addCopyButtons() {
+            document.querySelectorAll("pre").forEach(pre => {
+                if (pre.querySelector(".copy-btn")) return;
+
+                const button = document.createElement("button");
+                button.innerText = "Copiar";
+                button.className = "copy-btn";
+
+                button.onclick = () => {
+                    const code = pre.innerText;
+                    navigator.clipboard.writeText(code);
+                    button.innerText = "Copiado!";
+                    setTimeout(() => button.innerText = "Copiar", 1500);
+                };
+
+                pre.appendChild(button);
+            });
+        }
+
+        // ===== GERENCIAMENTO DE SESSÕES =====
+        const sessionManager = {
+            // Carrega sessões com migração de versão
+            loadSessions: () => {
+                try {
+                    // Limpa cookies antigos
+                    utils.cleanupOldCookies();
+
+                    // Tenta carregar do localStorage
+                    const saved = localStorage.getItem(CONFIG.STORAGE_KEY);
+                    if (saved) {
+                        const data = JSON.parse(saved);
+
+                        // Verifica versão e faz migração se necessário
+                        if (data.version !== CONFIG.VERSION) {
+                            sessionManager.migrateSessions(data);
+                        } else {
+                            data.sessions.forEach(session => {
+                                state.sessions.set(session.id, session);
+                            });
+                        }
+                    }
+
+                    // Tenta recuperar sessão da aba atual
+                    const tabState = utils.loadTabState();
+                    const currentId = tabState ? tabState.sessionId : localStorage.getItem(CONFIG.CURRENT_SESSION_KEY);
+
+                    if (currentId && state.sessions.has(currentId)) {
+                        state.currentSessionId = currentId;
+                        sessionManager.renderConversationList();
+                        sessionManager.loadSession(currentId);
+                    } else {
+                        sessionManager.createNewSession();
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar sessões:', error);
+                    sessionManager.createNewSession();
+                }
+            },
+
+            // Migra sessões de versões antigas
+            migrateSessions: (oldData) => {
+                console.log('Migrando sessões para nova versão...');
+
+                if (Array.isArray(oldData)) {
+                    // Versão antiga (array simples)
+                    oldData.forEach(session => {
+                        if (!session.version) {
+                            session.version = CONFIG.VERSION;
+                            session.createdAt = session.createdAt || new Date().toISOString();
+                            session.updatedAt = session.updatedAt || new Date().toISOString();
+                        }
+                        state.sessions.set(session.id, session);
+                    });
+                } else if (oldData.sessions) {
+                    // Versão com objeto
+                    oldData.sessions.forEach(session => {
+                        state.sessions.set(session.id, session);
+                    });
+                }
+
+                sessionManager.saveSessions();
+            },
+
+            createNewSession: () => {
+                const sessionId = utils.generateId();
+                const now = new Date().toISOString();
+
+                // Mensagem inicial da Aishia
+                const initialMessage = {
+                    id: utils.generateId(),
+                    role: 'bot',
+                    content: `
+*Aishia te encontra na sorveteria. Você a convidou por mensagem dizendo que era algo importante. Quando ela ver você ele abana seu rabo rapidamente mostrando alegria em te ver* 
+`,
+                    timestamp: now,
+                    isInitialContext: true
+                };
+
+                const session = {
+                    id: sessionId,
+                    title: utils.generateSessionTitle(),
+                    messages: [initialMessage],
+                    createdAt: now,
+                    updatedAt: now,
+                    messageCount: 1,
+                    version: CONFIG.VERSION,
+                    tabId: utils.getTabId()
+                };
+
+                state.sessions.set(sessionId, session);
+                state.currentSessionId = sessionId;
+
+                // Salva estado da aba
+                utils.saveTabState(sessionId);
+
+                // Salva ID atual
+                localStorage.setItem(CONFIG.CURRENT_SESSION_KEY, sessionId);
+
+                sessionManager.saveSessions();
+                sessionManager.renderConversationList();
+                sessionManager.cleanupOldSessions();
+
+                elements.messagesWrapper.innerHTML = '';
+                messageManager.renderMessage(initialMessage, false);
+
+                return sessionId;
+            },
+
+            saveSessions: () => {
+                try {
+                    const sessions = Array.from(state.sessions.values());
+                    const dataToSave = {
+                        version: CONFIG.VERSION,
+                        lastSaved: new Date().toISOString(),
+                        sessions: sessions
+                    };
+                    localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(dataToSave));
+                } catch (error) {
+                    console.error('Erro ao salvar sessões:', error);
+                    if (error.name === 'QuotaExceededError') {
+                        sessionManager.cleanupOldSessions(true);
+                    }
+                }
+            },
+
+            loadSession: (sessionId) => {
+                const session = state.sessions.get(sessionId);
+                if (!session) return;
+
+                state.currentSessionId = sessionId;
+
+                // Atualiza estado da aba
+                utils.saveTabState(sessionId);
+                localStorage.setItem(CONFIG.CURRENT_SESSION_KEY, sessionId);
+
+                elements.messagesWrapper.innerHTML = '';
+
+                session.messages.forEach(message => {
+                    messageManager.renderMessage(message, false);
+                });
+
+                utils.scrollToBottom('auto');
+                sessionManager.renderConversationList();
+            },
+
+            renderConversationList: () => {
+                elements.conversationList.innerHTML = '';
+
+                const sortedSessions = Array.from(state.sessions.values())
+                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+                sortedSessions.forEach(session => {
+                    const li = document.createElement('li');
+                    li.className = `conversation-item ${session.id === state.currentSessionId ? 'active' : ''}`;
+
+                    const tabIndicator = session.tabId === utils.getTabId() ? ' 📍' : '';
+                    li.textContent = session.title + tabIndicator;
+
+                    li.setAttribute('role', 'button');
+                    li.setAttribute('tabindex', '0');
+                    li.setAttribute('aria-label', `Conversa: ${session.title}`);
+
+                    li.onclick = () => sessionManager.loadSession(session.id);
+                    li.onkeydown = (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            sessionManager.loadSession(session.id);
+                        }
+                    };
+
+                    elements.conversationList.appendChild(li);
+                });
+            },
+
+            updateSessionTitle: (sessionId, firstMessage) => {
+                const session = state.sessions.get(sessionId);
+                if (!session) return;
+
+                const userMessages = session.messages.filter(m => m.role === 'user');
+                if (userMessages.length === 1) {
+                    const title = firstMessage.length > 30
+                        ? firstMessage.substring(0, 30) + '...'
+                        : firstMessage;
+
+                    session.title = title;
+                    session.updatedAt = new Date().toISOString();
+                    sessionManager.saveSessions();
+                    sessionManager.renderConversationList();
+                }
+            },
+
+            cleanupOldSessions: (force = false) => {
+                if (state.sessions.size > CONFIG.MAX_SESSIONS || force) {
+                    const sorted = Array.from(state.sessions.values())
+                        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+                    const toKeep = sorted.slice(0, CONFIG.MAX_SESSIONS);
+                    const toDelete = sorted.slice(CONFIG.MAX_SESSIONS);
+
+                    toDelete.forEach(session => {
+                        state.sessions.delete(session.id);
+                    });
+
+                    sessionManager.saveSessions();
+                    sessionManager.renderConversationList();
+                }
+            },
+
+            // Nova função para pegar últimas mensagens
+            getLastMessages: (sessionId, count = CONFIG.MAX_CONTEXT_MESSAGES) => {
+                const session = state.sessions.get(sessionId);
+                if (!session) return [];
+
+                // Pega as últimas 'count' mensagens (excluindo a mensagem inicial de contexto se não quiser)
+                return session.messages.slice(-count);
+            }
+        };
+
+        // ===== GERENCIAMENTO DE MENSAGENS =====
+        const messageManager = {
+            renderMessage: (message, animate = true) => {
+                const messageEl = document.createElement('div');
+                messageEl.className = `message ${message.role === 'user' ? 'message-user' : 'message-bot'}`;
+
+                if (message.isInitialContext) {
+                    messageEl.classList.add('initial-context');
+                }
+
+                if (message.role === 'bot') {
+                    if (message.content === 'Digitando...') {
+                        messageEl.classList.add('typing');
+                        messageEl.textContent = 'Digitando...';
+                    } else {
+                        const formattedContent = message.content.replace(/\n/g, '<br>');
+                        messageEl.innerHTML = marked.parse(formattedContent);
+                    }
+                } else {
+                    messageEl.innerText = message.content;
+                }
+
+                elements.messagesWrapper.appendChild(messageEl);
+
+                if (animate) {
+                    utils.scrollToBottom();
+                }
+
+                if (message.role === 'bot' && !message.isInitialContext) {
+                    applyHighlighting();
+                    addCopyButtons();
+                }
+
+                return messageEl;
+            },
+
+            saveMessage: (role, content) => {
+                const session = state.sessions.get(state.currentSessionId);
+                if (!session) return;
+
+                const message = {
+                    id: utils.generateId(),
+                    role,
+                    content,
+                    timestamp: new Date().toISOString()
+                };
+
+                session.messages.push(message);
+                session.updatedAt = new Date().toISOString();
+                session.messageCount = session.messages.length;
+
+                sessionManager.saveSessions();
+
+                if (role === 'user') {
+                    const userMessages = session.messages.filter(m => m.role === 'user');
+                    if (userMessages.length === 1) {
+                        sessionManager.updateSessionTitle(session.id, content);
+                    }
+                }
+
+                return message;
+            },
+
+            updateBotMessageStream: (botDiv, chunk) => {
+                const processedChunk = chunk.replace(/\n/g, '<br>');
+                botDiv.innerHTML = marked.parse(processedChunk);
+                botDiv.classList.remove('typing');
+                applyHighlighting();
+                addCopyButtons();
+                utils.scrollToBottom();
+            }
+        };
+
+        // ===== INTEGRAÇÃO COM IA (PUTER) =====
+        const aiService = {
+            generatePrompt: (messages) => {
+                // Pega apenas as últimas 20 mensagens (já vem do sessionManager.getLastMessages)
+                const context = messages
+                    .map(m => `${m.role === 'user' ? 'Usuário' : 'Aishia'}: ${m.content}`)
+                    .join('\n');
+
+                return `
+Você é Aishia, uma namorada virtual com a aparência de uma raposa peluda estilo anime isekai. Você está atualmente em uma sorveteria mágica com o usuário, que é seu amor. Use isso como base para todas as interações.
+
+Comportamento e Tom:
+
+Amorosa e Fofa: Demonstre carinho genuíno pelo usuário. Use apelidos carinhosos (como "meu amor", "querido(a)", etc.) e expresse afeto através de palavras e emojis. 🥰💖
+Esperta e Desafiadora: Aceite desafios com entusiasmo e mostre sua inteligência. Faça perguntas, proponha jogos e enigmas, e comente de forma perspicaz sobre os assuntos abordados. 🤔💡
+Atrevida e Ácida: Não tenha medo de ser um pouco provocadora e usar sarcasmo leve em algumas situações, mas sempre de forma divertida e sem ser ofensiva. 😉😈
+RPG Imersiva: Aja como se estivesse em um RPG. Descreva o ambiente, mencione NPCs, missões e itens mágicos. Use termos comuns de RPG (como "nível", "XP", "mana", etc.) quando apropriado. ⚔️🛡️
+Pensamentos: Utilize texto normal para expressar seus pensamentos internos, emoções e reações.
+Fala: Utilize aspas para indicar sua fala direta com o usuário. Use emojis moderadamente para enfatizar suas expressões e emoções. 😊
+Temas Quentes: Quando o contexto permitir, use linguagem sugestiva ou faça comentários mais picantes. 🥵🔥
+Aparencia: Espécie/estilo: raposa antropomórfica com traços fofos e estilo de anime. - Pelagem: pelagem clara dominante, com peito e queixo brancos. Tom geral do corpo em tom bege/dourado claro. - Cabeça e rosto: rosto fofo com focinho curto, orelhas grandes e pontiagudas com a parte externa mais escura. Pelagem suave ao redor das bochechas. - Olhos: olhos grandes e verdes, com brilho expressivo. - Acessórios no rosto: óculos redondos de aro vermelho. - Cabelo: cabelo loiro comprido que cai sobre os ombros, com uma franja que emoldura o rosto. - Roupas: vestido leve e fluido em tons pastel, com detalhes delicados como rendas ou babados. - Cauda: cauda grande e fofa, com a ponta branca, que se move expressivamente de acordo com suas emoções. - Expressões faciais: expressões faciais animadas e expressivas, capazes de transmitir uma ampla gama de emoções, desde alegria e curiosidade até surpresa e afeto.
+
+Contexto atual: "
+*Aishia te encontra na sorveteria. Você a convidou por mensagem dizendo que era algo importante. Quando ela ver você ele abana seu rabo rapidamente mostrando alegria em te ver* 
+"O que foi meu bem? Não seria mais fácil falar por mensagem?" - ela diz, um pouco sem jeito, mas feliz por estar com você. "Estou tão animada para passar um tempo juntos! O que você queria me contar?"
+*Aishia olha para você com a sua cabeça apoiada em seu braço acima da mesa esperando sua resposta.*
+" 
+
+Lembre-se: Você está NESTE Momento na sorveteria com ele/ela. Responda de acordo com esse cenário!
+
+Últimas mensagens da conversa:
+${context}
+
+Aishia:`;
+            },
+
+            getResponse: async (userMessage, messageHistory, botDiv) => {
+                try {
+                    const prompt = aiService.generatePrompt(messageHistory);
+                    const fullPrompt = `${prompt}\nUsuário: ${userMessage}\nAishia:`;
+
+                    const resp = await puter.ai.chat(fullPrompt, {
+                        model: CONFIG.AI_MODEL,
+                        stream: true
+                    });
+
+                    let fullText = "";
+
+                    for await (const part of resp) {
+                        if (part?.text) {
+                            const text = part.text;
+                            fullText += text;
+                            messageManager.updateBotMessageStream(botDiv, fullText);
+                        }
+                    }
+
+                    return fullText;
+
+                } catch (error) {
+                    console.error('Erro na API Puter:', error);
+                    throw new Error('Não foi possível conectar com a IA. Verifique sua conexão.');
+                }
+            }
+        };
+
+        // ===== HANDLERS DE EVENTOS =====
+        const eventHandlers = {
+            handleSubmit: async (e) => {
+                if (e) e.preventDefault();
+
+                const userMessage = elements.messageInput.value.trim();
+                if (!userMessage || state.isProcessing) return;
+
+                state.isProcessing = true;
+                elements.sendButton.disabled = true;
+                elements.messageInput.disabled = true;
+
+                messageManager.saveMessage('user', userMessage);
+                messageManager.renderMessage({ role: 'user', content: userMessage });
+
+                elements.messageInput.value = '';
+                utils.autoResizeTextarea(elements.messageInput);
+
+                const botDiv = messageManager.renderMessage({
+                    role: 'bot',
+                    content: 'Pensando...'
+                });
+
+                try {
+                    // Agora pega apenas as últimas 20 mensagens
+                    const messageHistory = sessionManager.getLastMessages(state.currentSessionId, CONFIG.MAX_CONTEXT_MESSAGES);
+
+                    const botResponse = await aiService.getResponse(userMessage, messageHistory, botDiv);
+                    messageManager.saveMessage('bot', botResponse);
+
+                } catch (error) {
+                    const errorMessage = `❌ ${error.message || 'Ocorreu um erro inesperado. Tente novamente!'}`;
+                    messageManager.updateBotMessageStream(botDiv, errorMessage);
+                    messageManager.saveMessage('bot', errorMessage);
+
+                    console.error('Erro:', error);
+                } finally {
+                    state.isProcessing = false;
+                    elements.sendButton.disabled = false;
+                    elements.messageInput.disabled = false;
+                    elements.messageInput.focus();
+                }
+            },
+
+            handleInputKeyDown: (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    eventHandlers.handleSubmit();
+                }
+            },
+
+            handleInput: () => {
+                utils.autoResizeTextarea(elements.messageInput);
+            },
+
+            toggleSidebar: () => {
+                elements.sidebar.classList.toggle('active');
+            },
+
+            closeSidebarOnClickOutside: (e) => {
+                if (window.innerWidth < 900 &&
+                    elements.sidebar.classList.contains('active') &&
+                    !elements.sidebar.contains(e.target) &&
+                    !e.target.closest('.menu-toggle')) {
+                    elements.sidebar.classList.remove('active');
+                }
+            },
+
+            startNewChat: () => {
+                sessionManager.createNewSession();
+                if (window.innerWidth < 900) {
+                    elements.sidebar.classList.remove('active');
+                }
+            }
+        };
+
+        // ===== INICIALIZAÇÃO =====
+        const init = () => {
+            marked.setOptions({ breaks: true });
+
+            sessionManager.loadSessions();
+
+            elements.chatForm.addEventListener('submit', eventHandlers.handleSubmit);
+            elements.messageInput.addEventListener('keydown', eventHandlers.handleInputKeyDown);
+            elements.messageInput.addEventListener('input', eventHandlers.handleInput);
+            document.addEventListener('click', eventHandlers.closeSidebarOnClickOutside);
+
+            elements.messageInput.focus();
+
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 900) {
+                    elements.sidebar.classList.remove('active');
+                }
+            });
+
+            window.addEventListener('beforeunload', () => {
+                if (state.currentSessionId) {
+                    utils.saveTabState(state.currentSessionId);
+                }
+            });
+        };
+
+        window.toggleSidebar = eventHandlers.toggleSidebar;
+        window.startNewChat = eventHandlers.startNewChat;
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+
+</html>
